@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real-time Video Streaming</title>
+    <!-- Add any necessary CSS stylesheets here -->
+</head>
+<body>
+    <img id="liveStream" autoplay></img>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+    
+        socket.on('connect', function() {
+            console.log('Connected to server');
+        });
+    
+        socket.on('video_stream', function(data) {
+            var img = document.getElementById('liveStream');
+            img.src = 'data:image/jpeg;base64,' + data.image;
+        });
+
+// Handle receiving messages from the server
+socket.on('video_stream', function(data) {
+    console.log('Received video stream data:', data);
+    // Handle the video stream data as needed
+    if (data && data.image) {
+        // Update the src attribute of the <img> element with the received image data
+        document.getElementById('liveStream').src = 'data:image/jpeg;base64,' + data.image;
+    }
+});
+    </script>
+    
+</body>
+</html>

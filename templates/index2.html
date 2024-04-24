@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SuperCam Feed</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Add custom styles here if needed */
+
+        body {
+            background-color: #292929; 
+            color: aliceblue;
+        }
+
+        #liveStream {
+            border-radius: 35px;
+        }
+
+        .btn {
+            width: 100%;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Live SuperCam Stream</h1>
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="embed-responsive embed-responsive-16by9">
+                    <img id="liveStream" class="embed-responsive-item" src="/video_feed" alt="Live Stream">
+                </div>
+            </div>
+        </div>
+
+        <!-- Display window for current name -->
+        <div id="currentNameDisplay" class="mt-4 p-3 border rounded"></div>
+
+
+        <div class="mt-4">
+            <div class="text-center">
+                <button id="btnCaptureImage" class="btn btn-primary mb-2"><i class="fas fa-camera"></i> Capture Image</button>
+                <button id="btnViewList" class="btn btn-success mb-2"><i class="fas fa-camera"></i> View Authorized List</button>
+                <button id="btnRecordVideo" class="btn btn-light"><i class="fas fa-video"></i> Record Video</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // Retry loading the image if an error occurs
+        const img = document.getElementById('liveStream');
+        img.onerror = function() {
+            // If an error occurs, briefly hide the image, then try reloading.
+            this.style.display = 'none';
+            setTimeout(() => {
+                this.src = this.src.split('?')[0] + '?' + new Date().getTime();
+                this.style.display = '';
+            }, 1000); // Retry after 1 second
+        };
+
+
+
+        // JavaScript code for capturing image and recording video
+        // Add your logic here
+        document.getElementById('btnCaptureImage').addEventListener('click', function() {
+            // Add logic for capturing image
+        });
+
+        document.getElementById('btnRecordVideo').addEventListener('click', function() {
+            // Add logic for recording video
+        });
+
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+    
+        // Handle receiving messages from the server
+        socket.on('message', function(message) {
+            console.log(message + " is at the door");
+            // Handle the message as needed
+        });
+
+        socket.onmessage = function(message) {
+    
+                // Update the display window with the current name
+                $("#currentNameDisplay").text(message + " is at the door");
+            };
+    
+        // Example of sending a message to the server
+        socket.emit('message', 'Hello, server!');
+    </script>
+</body>
+</html>
+   
