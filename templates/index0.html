@@ -290,7 +290,7 @@ themeToggleBtn.addEventListener('click', function() {
         // Lock button click event
         $('#lockBtn').click(function() {
             $.ajax({
-                url: 'http://raspberrypi16.local:8000/api/lock',
+                url: 'http://raspberrypi16.local:8000/api/lock', //replace raspberrypi16.local with your raspberry pi hostname
                 type: 'POST',
                 success: function(response) {
                     console.log(response);  // Log success message
@@ -304,7 +304,7 @@ themeToggleBtn.addEventListener('click', function() {
         // Unlock button click event
         $('#unlockBtn').click(function() {
             $.ajax({
-                url: 'http://raspberrypi16.local:8000/api/unlock',
+                url: 'http://raspberrypi16.local:8000/api/unlock', //replace raspberrypi16.local with your raspberry pi hostname
                 type: 'POST',
                 success: function(response) {
                     console.log(response);  // Log success message
@@ -319,7 +319,7 @@ themeToggleBtn.addEventListener('click', function() {
 
         $('#trainBtn').click(function() {
         $.ajax({
-                url: 'http://raspberrypi16.local:8000/train_model',
+                url: 'http://raspberrypi16.local:8000/train_model', //replace raspberrypi16.local with your raspberry pi hostname
                 type: 'POST',
                 success: function(response) {
                     console.log(response);  // Log success message

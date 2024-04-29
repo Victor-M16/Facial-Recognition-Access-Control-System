@@ -3,8 +3,8 @@
 #include <ArduinoJson.h>
 #include <ESP32Servo.h>
 
-const char* ssid = "Asgard16"; // replace with the ssid and password of the network the RPI4 is connected to
-const char* password = "14MTH0R16";
+const char* ssid = "**********************"; // replace with the ssid and password of the network the RPI4 is connected to
+const char* password = "************************";
 
 const int serverPort = 80; //the port on which the server is running to receive requests from the raspberry pi
 const int servoPin = 13; // put the gpio pin number the servo is attached to
@@ -30,7 +30,7 @@ void setup() {
 
   // Initialize servo
   servo.setPeriodHertz(50);  // Standard 50 Hz servo
-  servo.attach(servoPin, 1000, 2000); // Replace servoPin with the appropriate pin number and min/max pulse width
+  servo.attach(servoPin, 1000, 2000); // min/max pulse width
 
   // Route setup
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
