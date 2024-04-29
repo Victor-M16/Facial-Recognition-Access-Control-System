@@ -1,0 +1,138 @@
+<mxfile host="app.diagrams.net" modified="2024-04-29T20:54:01.475Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36" etag="TZmGb-ay1m0ufNHFPZAz" version="24.3.1" type="device">
+  <diagram name="Page-1" id="WGROJeagrMj4aEX8wjt0">
+    <mxGraphModel dx="4490" dy="2008" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-1" value="&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;Create and initialise events&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;supercamserver_on, supercamserver_off, lockingwebserver_off,&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;lockingwebserver_on,face_recognition_on,face_recognition_off,&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;website_accessed,website_left,access_granted, access_denied&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;Create task SuperCam Web Server&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;Create task Locking Web Server&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;Create task Live streaming&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;Create task Face recognition&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;Create task Access control&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;Create task Serve Webpage&lt;/font&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;" vertex="1" parent="1">
+          <mxGeometry x="140" y="10" width="590" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-2" value="&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;div&gt;&lt;b&gt;SuperCam Web Server Task&lt;/b&gt;&lt;/div&gt;&lt;div&gt;while(1){&lt;/div&gt;&lt;div&gt;if(SuperCam Web Server ON){&lt;/div&gt;&lt;div&gt;Start VideoCamera();&lt;/div&gt;&lt;div&gt;Set Event supercamserver_on&lt;span style=&quot;background-color: initial;&quot;&gt;;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;}else{&lt;/div&gt;&lt;div&gt;Set Event supercamserver_off&lt;/div&gt;&lt;div&gt;Stop VideoCamera();&lt;br&gt;&lt;/div&gt;&lt;div&gt;Reset Event supercamserver_on&lt;/div&gt;&lt;div style=&quot;&quot;&gt;}}&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;" vertex="1" parent="1">
+          <mxGeometry x="-220" y="370" width="450" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-4" value="&lt;div style=&quot;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;&lt;b&gt;Locking Web Server Task&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;while(1){&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;if(Locking Web Server started){&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;Set Event lockingwebserver_on&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;Reset Event lockingwebserver_off&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;}else{&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;Set Event lockingwebserver_off&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;Reset Event supercamserver_on&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;}}&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="1240" width="450" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-5" value="&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;div&gt;&lt;b&gt;Remote Control Task&lt;/b&gt;&lt;/div&gt;&lt;div&gt;while(1){&lt;/div&gt;&lt;div&gt;if(supercamserver_on &amp;amp;&amp;amp; lockingwebserver_on &amp;amp;&amp;amp; website_accessed){&lt;/div&gt;&lt;div&gt;if (Unlock Button Pressed){&lt;/div&gt;&lt;div&gt;Set Event access_granted;&lt;/div&gt;&lt;div&gt;Reset Event access_denied;&lt;/div&gt;&lt;div&gt;}else if (Lock Button Pressed){&lt;/div&gt;&lt;div&gt;Set Event access_denied;&lt;/div&gt;&lt;div&gt;Reset Event access_granted;&lt;/div&gt;&lt;div&gt;}}}&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="700" width="450" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-6" value="&lt;div style=&quot;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;&lt;b&gt;Access Control Task&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;while(1){&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;if(supercamserver_on &amp;amp;&amp;amp; lockingwebserver_on){&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;if {access_granted){&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;Set Event unlock;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;Reset Event lock;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;}else{&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;Set Event unlock;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;Reset Event lock;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;}}}}&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="730" width="450" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-7" value="&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;div&gt;&lt;b&gt;Serve Webpage Task&lt;/b&gt;&lt;/div&gt;&lt;div&gt;while(1){&lt;/div&gt;&lt;div&gt;if(supercamserver_on){&lt;/div&gt;&lt;div&gt;if {Web site url accessed){&lt;/div&gt;&lt;div&gt;Set Event website_accessed;&lt;/div&gt;&lt;div&gt;Reset Event website_left;&lt;/div&gt;&lt;div&gt;}else{&lt;/div&gt;&lt;div&gt;Set Event website_left;&lt;/div&gt;&lt;div&gt;Reset Event website_accessed;&lt;/div&gt;&lt;div&gt;}}}&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;" vertex="1" parent="1">
+          <mxGeometry x="-700" y="640" width="450" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-8" value="&lt;div style=&quot;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;&lt;b&gt;Live Streaming Task&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;while(1){&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;if(supercamserver_on &amp;amp;&amp;amp; website_accessed){&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;Set Event livestream_start;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;Wait for the signalling of supercamserver_off or website_left;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;Set Event livestream_stop;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;}}&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;" vertex="1" parent="1">
+          <mxGeometry x="470" y="380" width="450" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-9" value="&lt;div style=&quot;&quot;&gt;&lt;div style=&quot;font-size: 20px;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;div&gt;&lt;b&gt;Face Recognition Task&lt;/b&gt;&lt;/div&gt;&lt;div&gt;while(1){&lt;/div&gt;&lt;div&gt;if(supercamserver_on){&lt;/div&gt;&lt;div&gt;Set Event face_recognition_on;&lt;/div&gt;&lt;div&gt;if(Face in Authorised list){&lt;/div&gt;&lt;div&gt;Set Event access_granted;&lt;/div&gt;&lt;div&gt;Reset Event access_denied;&lt;/div&gt;&lt;div&gt;}else{&lt;/div&gt;&lt;div&gt;Set Event access_denied;&lt;/div&gt;&lt;div&gt;Reset Event access_granted;&lt;/div&gt;&lt;div&gt;}}}&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;" vertex="1" parent="1">
+          <mxGeometry x="495" y="860" width="400" height="310" as="geometry" />
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-11" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.644;exitY=0.429;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="dvrzT7Kf8fO13AkYTZoA-2">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="180" y="740" as="sourcePoint" />
+            <mxPoint x="400" y="490" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-12" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.622;exitY=0.464;exitDx=0;exitDy=0;exitPerimeter=0;entryX=-0.004;entryY=0.337;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="dvrzT7Kf8fO13AkYTZoA-7" target="dvrzT7Kf8fO13AkYTZoA-8">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-110" y="940" as="sourcePoint" />
+            <mxPoint x="430" y="810" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="400" y="770" />
+              <mxPoint x="400" y="470" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-13" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.667;exitY=0.75;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="dvrzT7Kf8fO13AkYTZoA-2" target="dvrzT7Kf8fO13AkYTZoA-8">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="250" y="700" as="sourcePoint" />
+            <mxPoint x="300" y="650" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="340" y="580" />
+              <mxPoint x="340" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-14" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.511;exitY=0.714;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="dvrzT7Kf8fO13AkYTZoA-7">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="50" y="910" as="sourcePoint" />
+            <mxPoint x="280" y="580" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="280" y="850" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-15" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" target="dvrzT7Kf8fO13AkYTZoA-9">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="490" as="sourcePoint" />
+            <mxPoint x="390" y="790" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="320" y="937" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-16" value="" style="endArrow=classic;html=1;rounded=0;entryX=-0.004;entryY=0.19;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="dvrzT7Kf8fO13AkYTZoA-5">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="270" y="490" as="sourcePoint" />
+            <mxPoint x="980" y="760" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="270" y="330" />
+              <mxPoint x="980" y="320" />
+              <mxPoint x="980" y="753" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-17" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" target="dvrzT7Kf8fO13AkYTZoA-6">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="980" y="320" as="sourcePoint" />
+            <mxPoint x="1300" y="660" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1600" y="320" />
+              <mxPoint x="1600" y="800" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-18" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.667;exitY=0.429;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="dvrzT7Kf8fO13AkYTZoA-4">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1610" y="1340" as="sourcePoint" />
+            <mxPoint x="1610" y="800" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1610" y="1360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-19" value="" style="endArrow=classic;html=1;rounded=0;entryX=-0.001;entryY=0.593;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.533;exitY=0.714;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="dvrzT7Kf8fO13AkYTZoA-5" target="dvrzT7Kf8fO13AkYTZoA-6">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1350" y="1050" as="sourcePoint" />
+            <mxPoint x="1410" y="870" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-20" value="" style="endArrow=classic;html=1;rounded=0;entryX=-0.001;entryY=0.357;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.556;exitY=0.464;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="dvrzT7Kf8fO13AkYTZoA-5" target="dvrzT7Kf8fO13AkYTZoA-6">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1320" y="1020" as="sourcePoint" />
+            <mxPoint x="1370" y="970" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-21" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.637;exitY=0.516;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="dvrzT7Kf8fO13AkYTZoA-9">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1170" y="1000" as="sourcePoint" />
+            <mxPoint x="1560" y="830" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1560" y="1015" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dvrzT7Kf8fO13AkYTZoA-22" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.637;exitY=0.516;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="740" y="1090" as="sourcePoint" />
+            <mxPoint x="1510" y="900" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1510" y="1090" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
