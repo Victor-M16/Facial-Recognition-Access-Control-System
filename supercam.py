@@ -38,7 +38,7 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 
-ESP32_IP = "192.168.8.173"  # Replace with the IP address of your ESP32
+ESP32_IP = "192.***.**.***"  # Replace with the IP address of your ESP32
 def get_lock_status():
     url = f"http://{ESP32_IP}:80/lock-status"  # Updated endpoint URL
     try:
