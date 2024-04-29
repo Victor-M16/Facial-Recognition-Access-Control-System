@@ -63,20 +63,9 @@ System requirements include hardware components (Raspberry Pi, ESP32, camera), s
 4. **Educational Institutions:** Schools or universities use the system to control access to classrooms, laboratories, or administrative offices based on user permissions.
 5. **Health Institutions:** Hospitals or laboratories use the system to control access to medication and wards.
 
-## Installation
-1. Clone the repository to your Raspberry Pi.
-2. Install the necessary dependencies by running `pip install -r requirements.txt`.
-3. Train the face recognition model using labeled images of authorized users.
-4. Run the Flask application using `python app.py`.
-5. Access the web portal from any device connected to the same network as the Raspberry Pi.
 
-## Usage
-1. Access the web portal through the provided URL.
-2. Register authorized users by uploading their images and providing their names.
-3. Configure access permissions for each user.
-4. Start the system, and it will begin recognizing faces in real-time.
-5. View the live stream and monitor access events through the web portal.
-6. Control the servo motor to grant or deny access to items of value.
+
+
 
 ## Contributing
 Contributions are welcome! Please fork the repository, make your changes, and submit a pull request. For major changes, please open an issue first to discuss the proposed changes.
