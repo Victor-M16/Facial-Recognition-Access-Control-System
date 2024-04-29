@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live SuperCam Stream</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // On page load or when changing themes, best to add inline in `head` to avoid FOUC
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+
+<body>
+    <div class="flex items-center justify-between bg-blue-700 p-4 border-b-2 border-blue-700 dark:bg-gray-900">
+        <div class="flex items-center">
+            <h2 class="text-white mr-8 dark:text-gray-300" style="margin-right: 20px;">Face Recognition model training</h2>
+        </div>
+        <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
+            <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+            <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 p-8 dark:bg-gray-800" style="height: 100vh;">
+        <div class="max-w-3xl w-full mx-auto rounded-lg shadow-lg p-6 border-2 border-blue-700 dark:bg-gray-900 h-full">
+            <h1 class="text-2xl font-bold mb-4 dark:text-white">Face Recognition Model Training</h1>
+            <!-- Video Stream -->
+            <!-- Name Section -->
+            <div class="p-4 bg-gray-100 border-t border border-gray-200 dark:bg-gray-600">
+                <h2 class="text-xl font-semibold text-center text-gray-800 dark:text-white">
+                    <div id="currentNameDisplay">The model is training, please wait...</div>
+                </h2>
+            </div>
+        </div>
+        <div class="p-4 flex justify-center items-center h-full">
+            <button id="btnCaptureImage" onclick="window.location.href='/'" class="block w-full px-4 py-2 mb-2 bg-green-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:bg-blue-600 dark:hover:bg-blue-600 dark:focus:bg-blue-600">
+                <i class="fas fa-video"></i> Go to live stream
+            </button>
+        </div>
+    </div>
+    
+
+    <footer class="text-center py-4 bg-gray-900 text-white">
+        <div class="container mx-auto">
+            <p class="text-sm">Powered by Group 4 @ <span>2024</span></p>
+        </div>
+    </footer>
+
+    <script src="../../node_modules/flowbite/dist/flowbite.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+
+    <!-- JavaScript for image streaming -->
+    <script>
+        // Retry loading the image if an error occurs
+        const img = document.getElementById('liveStream');
+        img.onerror = function() {
+            // If an error occurs, briefly hide the image, then try reloading.
+            this.style.display = 'none';
+            setTimeout(() => {
+                this.src = this.src.split('?')[0] + '?' + new Date().getTime();
+                this.style.display = '';
+            }, 1000); // Retry after 1 second
+        };
+    </script>
+
+    <!-- JavaScript for WebSockets -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+    <script>
+        // WebSocket connection for the default namespace
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        // Handle receiving messages from the server for the default namespace
+        socket.on('message', function(message) {
+            console.log(message);
+            $("#currentNameDisplay").empty();
+            $("#currentNameDisplay").text(message);
+            // Handle the message as needed
+        });
+
+        // WebSocket connection for the '/faces' namespace
+        var socket_faces = io.connect('http://' + document.domain + ':' + location.port + '/faces');
+
+        // Define an empty array to store the names
+        var authorized_list = [];
+
+        socket_faces.on('message', function(message) {
+            console.log("Received JSON object:", message);
+            // Parse the JSON object
+            var jsonObject = JSON.parse(message);
+            // Clear existing table rows
+            $("#authorizedListTable tbody").empty();
+            // Iterate over the keys of the JSON object
+            for (var key in jsonObject) {
+                if (jsonObject.hasOwnProperty(key)) {
+                    // Extract the name corresponding to the key
+                    var name = jsonObject[key];
+                    console.log("Name:", name);
+                    // Create a new row in the table with appropriate styling
+                    var newRow = $("<tr>").addClass("border-b border-gray-300 dark:bg-gray-600 dark:text-white");
+                    newRow.append($("<td>").addClass("border-b border-gray-300 dark:bg-gray-600 dark:text-white").text(name));
+                    newRow.append($("<span>").addClass("bg-green-200 text-green-800 py-1 px-2 rounded-full dark:bg-green-500 dark:text-green-200").text("Granted"));
+                    // Append the new row to the table body
+                    $("#authorizedListTable tbody").append(newRow);
+                }
+            }
+        });
+    </script>
+
+    <!-- JavaScript for toggling theme -->
+    <script>
+        var themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        var themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        // Change the icons inside the button based on previous settings
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            themeToggleLightIcon.classList.remove('hidden');
+        } else {
+            themeToggleDarkIcon.classList.remove('hidden');
+        }
+
+        var themeToggleBtn = document.getElementById('theme-toggle');
+
+        themeToggleBtn.addEventListener('click', function() {
+            // toggle icons inside button
+            themeToggleDarkIcon.classList.toggle('hidden');
+            themeToggleLightIcon.classList.toggle('hidden');
+
+            // if set via local storage previously
+            if (localStorage.getItem('color-theme')) {
+                if (localStorage.getItem('color-theme') === 'light') {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                }
+
+                // if NOT set via local storage previously
+            } else {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                }
+            }
+        });
+    </script>
+
+    <!-- jQuery for AJAX requests -->
+    <script>
+        $(document).ready(function() {
+            // Lock button click event
+            $('#lockBtn').click(function() {
+                $.ajax({
+                    url: 'http://raspberrypi16.local:8000/api/lock',
+                    type: 'POST',
+                    success: function(response) {
+                        console.log(response); // Log success message
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(error); // Log error message
+                    }
+                });
+            });
+
+            // Unlock button click event
+            $('#unlockBtn').click(function() {
+                $.ajax({
+                    url: 'http://raspberrypi16.local:8000/api/unlock',
+                    type: 'POST',
+                    success: function(response) {
+                        console.log(response); // Log success message
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(error); // Log error message
+                    }
+                });
+            });
+
+            $('#trainBtn').click(function() {
+                $.ajax({
+                    url: 'http://raspberrypi16.local:8000/train_model',
+                    type: 'POST',
+                    success: function(response) {
+                        console.log(response); // Log success message
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(error); // Log error message
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
