@@ -61,7 +61,7 @@ System requirements include hardware components (Raspberry Pi, ESP32, camera), s
 2. **Home Security:** Homeowners remotely monitor their property and control access to entry points using the web portal.
 3. **Retail Store Surveillance:** Store managers monitor customer activity and manage access to restricted areas in real-time.
 4. **Educational Institutions:** Schools or universities use the system to control access to classrooms, laboratories, or administrative offices based on user permissions.
-5. **Health Institution:** Hospitals or laboratories use the system to control access to medication and wards.
+5. **Health Institutions:** Hospitals or laboratories use the system to control access to medication and wards.
 
 ## Installation
 1. Clone the repository to your Raspberry Pi.
