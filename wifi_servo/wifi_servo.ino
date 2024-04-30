@@ -3,8 +3,8 @@
 #include <ArduinoJson.h>
 #include <ESP32Servo.h>
 
-const char* ssid = "**********************"; // replace with the ssid and password of the network the RPI4 is connected to
-const char* password = "************************";
+const char* ssid = "Asgard16"; // replace with the ssid and password of the network the RPI4 is connected to
+const char* password = "14MTH0R16";
 
 const int serverPort = 80; //the port on which the server is running to receive requests from the raspberry pi
 const int servoPin = 13; // put the gpio pin number the servo is attached to
