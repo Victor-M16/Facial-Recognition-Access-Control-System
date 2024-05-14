@@ -73,6 +73,4 @@ Contributions are welcome! Please fork the repository, make your changes, and su
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgements
-- Special thanks to [Insert Name] for their contributions to the face recognition model.
-- Thanks to [Insert Name] for their assistance with hardware setup and integration.
+
