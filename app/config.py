@@ -31,8 +31,11 @@ class Settings:
     # The original Pi camera mount was upside down, so frames were flipped vertically
     camera_flip: bool = field(default_factory=lambda: _env_bool("FRACS_CAMERA_FLIP", True))
     recognition_enabled: bool = field(default_factory=lambda: _env_bool("FRACS_RECOGNITION", True))
-    # Max face distance that counts as a match (face_recognition's default is 0.6; lower is stricter)
-    match_tolerance: float = field(default_factory=lambda: float(os.environ.get("FRACS_MATCH_TOLERANCE", "0.6")))
+    # Max face distance that counts as a match; lower is stricter. face_recognition's own
+    # default of 0.6 let 82 of 94 bundled photos in as someone else when their owner wasn't
+    # enrolled; no two different people in the dataset are closer than 0.456. 0.4 keeps a
+    # margin below that. Re-measure on your own faces: python -m app.cli evaluate-threshold
+    match_tolerance: float = field(default_factory=lambda: float(os.environ.get("FRACS_MATCH_TOLERANCE", "0.4")))
     # "hog" is the only practical detector on a Raspberry Pi; "cnn" needs a GPU
     detection_model: str = field(default_factory=lambda: os.environ.get("FRACS_DETECTION_MODEL", "hog"))
     # After this many seconds with no face in view, the recognizer forgets who it last saw,

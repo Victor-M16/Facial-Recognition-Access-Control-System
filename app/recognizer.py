@@ -90,6 +90,9 @@ class Recognizer:
         if match.name == self.current:
             return
         self.current = match.name
+        if match.distance is not None:
+            # Distances seen at the door are what FRACS_MATCH_TOLERANCE should be tuned against
+            log.info("%s in view (closest enrolled face %.3f away)", match.name, match.distance)
         self.notify(match.name)
         if match.access_granted:
             self.access.unlock(match.name, source="face")

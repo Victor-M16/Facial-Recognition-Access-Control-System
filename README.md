@@ -51,7 +51,7 @@ What isn't:
 ## Known limitations
 
 - **No liveness detection.** A photo or video of an enrolled person held up to the camera will probably unlock the door.
-- **Lookalikes.** Matching takes the closest enrolled face within a distance of 0.6 (`FRACS_MATCH_TOLERANCE`). Someone who isn't enrolled but looks enough like someone who is can be let in as them. The limit hasn't been tuned on real data yet.
+- **Lookalikes.** Matching takes the closest enrolled face within a distance of 0.4 (`FRACS_MATCH_TOLERANCE`). Someone who isn't enrolled but looks enough like someone who is can still be let in as them. The limit was tuned on the four people in `dataset/` (see [Choosing the match limit](#choosing-the-match-limit)), which is a small sample from photos rather than the door camera; the more people you enroll, the likelier a close lookalike. Re-check it with your own enrolled faces.
 - **Single-frame decisions.** One frame is enough to unlock.
 - **Accuracy and speed haven't been measured** on the Pi or on live camera footage. Recognition runs on the Pi's CPU and pauses while training.
 - Signing out doesn't close live-update connections already open in other tabs (they stop at the next page load). Login lockouts reset when the server restarts.
@@ -79,7 +79,7 @@ To move the photos in `dataset/<PersonName>/` into the database and train on the
 python -m app.cli import-dataset dataset --deny Pemphero --train
 ```
 
-After that, people are managed from the portal: add a person, capture or upload a few photos, choose whether they're granted access, and press **Train**.
+After that, people are managed from the portal: add a person, capture or upload a few photos, choose whether they're granted access, and press **Train**. Where you can, enroll with **Capture** from the door camera rather than uploads: matching works best when enrollment photos look like what the camera will see.
 
 Account commands: `python -m app.cli create-user | set-password | delete-user <name>`, `python -m app.cli list-users`. Changing a password signs that account out everywhere.
 
@@ -96,12 +96,36 @@ All settings are environment variables (see `app/config.py`):
 | `FRACS_DATA_DIR` | `./data` | Database and enrolled photos. |
 | `FRACS_SSL_CERTFILE`, `FRACS_SSL_KEYFILE` | unset | Serve the portal over HTTPS. |
 | `FRACS_SESSION_HOURS` | 12 | How long a login lasts. |
-| `FRACS_MATCH_TOLERANCE` | 0.6 | Max face distance counted as a match; lower is stricter. |
+| `FRACS_MATCH_TOLERANCE` | 0.4 | Max face distance counted as a match; lower is stricter. See [Choosing the match limit](#choosing-the-match-limit). |
 | `FRACS_FORGET_AFTER` | 5 | Seconds with no face in view before the same person can trigger an unlock again. |
 | `FRACS_CAMERA_INDEX`, `FRACS_CAMERA_FLIP` | 0, on | Which camera, and whether to flip the image vertically. |
 | `FRACS_RECOGNITION` | on | Turn automatic recognition off (portal only). |
 | `FRACS_HOST`, `FRACS_PORT` | 0.0.0.0, 8000 | Where the portal listens. |
 | `FRACS_CORS_ORIGINS` | unset | Extra origins allowed to call the API. |
+
+### Choosing the match limit
+
+Each face becomes a list of 128 numbers, and the distance between two lists says how alike two faces are. A face counts as an enrolled person when it's within `FRACS_MATCH_TOLERANCE` of one of their photos. Too high a limit lets strangers in as someone who looks like them; too low turns enrolled people away.
+
+The default of 0.4 comes from the 94 usable photos of 4 people in `dataset/`:
+
+| Limit | Strangers let in | Enrolled people accepted |
+|---|---|---|
+| 0.60 (face_recognition's default, used before) | 82 of 94 | 94 of 94 |
+| 0.50 | 28 of 94 | 94 of 94 |
+| 0.45 | 0 of 94 (3 of 94 after re-encoding) | 94 of 94 |
+| **0.40** | **0 of 94** | 94 of 94 (93 after re-encoding) |
+
+"Strangers let in" takes each person out of the index and counts how many of their photos would still be let in as someone else; at 0.6, nearly everyone would have been. The closest two different people, Cliff and Victor, are about 0.45 apart, so 0.4 leaves a margin below that. "Enrolled people accepted" holds out each photo and ignores burst shots taken a moment apart, which would otherwise match almost perfectly. The "re-encoding" figures are from the same photos re-encoded by this app with a newer dlib, which shifted distances by about 0.01. Occasional rejections matter little, because the recognizer checks several frames a second and needs only one good one.
+
+To check the limit on your own enrolled faces:
+
+```bash
+python -m app.cli evaluate-threshold                  # uses the database; add --limits 0.35 0.4 0.45 to choose values
+python -m app.cli evaluate-threshold --from-pickle encodings.pickle   # the legacy file
+```
+
+The server also logs how far each face at the door was from its closest enrolled photo (`Victor in view (closest enrolled face 0.312 away)`), which shows whether live frames sit comfortably inside the limit.
 
 ## Tests
 
