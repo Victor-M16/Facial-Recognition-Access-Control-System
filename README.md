@@ -110,7 +110,9 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-The tests don't need a camera, an ESP32 or dlib. If `g++` and the OpenSSL headers are installed, they also compile the firmware's authentication code (`wifi_servo/fracs_auth.h`) and check it against the Pi's. The rest of the firmware isn't compiled by the tests; build it with the Arduino IDE.
+The tests don't need a camera, an ESP32 or dlib (`requirements-dev.txt` leaves `face_recognition` out). If `g++` and the OpenSSL headers are installed, they also compile the firmware's authentication code (`wifi_servo/fracs_auth.h`) and check it against the Pi's. The rest of the firmware isn't compiled by the tests; build it with the Arduino IDE.
+
+GitHub Actions runs the same tests on every pull request and every push to `main` (`.github/workflows/tests.yml`). There, a skipped test counts as a failure, so the firmware and Socket.IO checks can't silently drop out.
 
 ## Contributing
 Contributions are welcome! Please fork the repository, make your changes, and submit a pull request. For major changes, please open an issue first to discuss the proposed changes.

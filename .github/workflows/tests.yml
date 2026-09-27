@@ -1,0 +1,39 @@
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements-base.txt
+            requirements-dev.txt
+
+      # g++ and the OpenSSL headers compile the firmware's auth code in tests/test_firmware_auth.py
+      - name: Install system packages
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends g++ libssl-dev
+
+      - name: Install Python packages
+        run: pip install -r requirements-dev.txt
+
+      # CI=true (set by GitHub) turns skipped tests into failures, see tests/conftest.py
+      - name: Run tests
+        run: pytest -rs

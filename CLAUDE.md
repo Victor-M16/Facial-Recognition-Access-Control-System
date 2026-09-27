@@ -9,6 +9,8 @@ FRACS (Facial Recognition Access Control and Surveillance System) is a Raspberry
 ## Commands
 
 - **Run the server:** `python supercam.py`, which is the same as `uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000`. `supercam.py` is now only an entry point.
+- **Install:** `pip install -r requirements.txt` on the Pi (needs dlib). For development and CI, `pip install -r requirements-dev.txt`, which skips `face_recognition`; shared dependencies live in `requirements-base.txt`.
+- **CI:** `.github/workflows/tests.yml` runs `pytest` on every PR and push to `main`, with g++ and libssl-dev installed. When `CI` is set, `tests/conftest.py` turns any skipped test into a failure.
 - **Tests:** `pytest` (config in `pytest.ini`). Run one test with `pytest tests/test_api.py::test_people_crud`. The tests need no camera, ESP32 or dlib: `tests/conftest.py` replaces `vision.encode_faces` with a fake that turns image brightness into an identity, and passes a `FakeCamera` / `FakeLock` into `create_app(..., start_background=False)`. The `client` fixture is signed in; `anon` is not. `tests/test_firmware_auth.py` compiles `wifi_servo/fracs_auth.h` with g++ and OpenSSL (skipped if either is missing) and checks its signatures match `app/lock.py`.
 - **Portal accounts:** `python -m app.cli create-user NAME` (prompts; `--password-stdin` for scripts), `set-password`, `delete-user`, `list-users`. There is no sign-up page; the login page says so when no accounts exist.
 - **Import the legacy `dataset/<Name>/*.jpg` folders:** `python -m app.cli import-dataset dataset [--deny NAME] [--train]`. Train from the command line with `python -m app.cli train [--full]`.

@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
@@ -117,3 +119,14 @@ def client(app, services):
         r = c.post("/login", data={"username": USERNAME, "password": PASSWORD}, follow_redirects=False)
         assert r.status_code == 303
         yield c
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    # In CI every test must run: a skip there (e.g. no g++ for the firmware test,
+    # or no socket.io client) would silently drop coverage, so count it as a failure
+    outcome = yield
+    report = outcome.get_result()
+    if os.environ.get("CI") and report.skipped and not hasattr(report, "wasxfail"):
+        report.outcome = "failed"
+        report.longrepr = f"skipped in CI: {report.longrepr}"
