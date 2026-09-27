@@ -4,29 +4,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-FRACS (Facial Recognition Access Control and Surveillance System) is a Raspberry Pi Flask app. It streams a camera feed, recognizes faces, and tells an ESP32 over HTTP to drive a servo lock. The repo has no build system, no test suite and no linter config.
+FRACS (Facial Recognition Access Control and Surveillance System) is a Raspberry Pi FastAPI app. It streams a camera feed, recognizes faces, and tells an ESP32 over HTTP to drive a servo lock. People, their face photos and encodings, and an access log are stored in SQLite.
 
-## Running
+## Commands
 
-- **Pi server:** `python supercam.py` serves on `0.0.0.0:8000` via `socketio.run`. It uses `flask`, `flask_socketio`, `flask_sqlalchemy`, `flask_cors`, `opencv-python` (`cv2`), `face_recognition` (needs dlib), `imutils` and `requests`. There is no requirements file.
+- **Run the server:** `python supercam.py`, which is the same as `uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000`. `supercam.py` is now only an entry point.
+- **Tests:** `pytest` (config in `pytest.ini`). Run one test with `pytest tests/test_api.py::test_people_crud`. The tests need no camera, ESP32 or dlib: `tests/conftest.py` replaces `vision.encode_faces` with a fake that turns image brightness into an identity, and passes a `FakeCamera` / `FakeLock` into `create_app(..., start_background=False)`.
+- **Import the legacy `dataset/<Name>/*.jpg` folders:** `python -m app.cli import-dataset dataset [--deny NAME] [--train]`. Train from the command line with `python -m app.cli train [--full]`.
 - **ESP32 firmware:** flash `wifi_servo/wifi_servo.ino` with the Arduino IDE. It needs the `ESPAsyncWebServer`, `ArduinoJson` and `ESP32Servo` libraries. Set `ssid`/`password` and `servoPin` before flashing.
-- **Frontend deps:** `templates/package.json` only pulls in `flowbite` (and `templates/node_modules` is committed). The pages load most of their JS/CSS from CDNs anyway.
+- There is no linter config and no frontend build step. The pages load their JS/CSS from CDNs; `templates/node_modules` is committed but mostly unused.
 
-## Hardcoded, deployment-specific values
+## Configuration
 
-These are all in-source, with no config file or env vars:
-- `supercam.py`: `ESP32_IP` (redacted placeholder), `UPLOAD_FOLDER = /home/mjima/flask/captured_images`, and `encodingsP = /home/mjima/flask/encodings.pickle` (absolute path; the repo root also has an `encodings.pickle`).
-- The CORS origins in `supercam.py` and the AJAX URLs in `templates/index0.html` / `templates/training.html` all use `http://raspberrypi16.local:8000`.
-- The authorization policy lives in `recognize_faces()`. `"Pemphero"` and `"Unknown"` trigger `lock()`, and any other known name triggers `unlock()`.
+Everything is set through `FRACS_*` environment variables, read in `app/config.py` (`Settings`). `FRACS_DATA_DIR` (default `./data`, gitignored) holds `fracs.db` and `faces/<person_id>/<uuid>.jpg`. If `FRACS_ESP32_URL` is unset, lock commands are skipped with a warning. `encodings.pickle` at the repo root belongs to the old Flask app and nothing reads it now.
 
-## Architecture (all in `supercam.py`)
+## Architecture (`app/`)
 
-- **Encodings model:** `encodings.pickle` is a dict `{"encodings": [...], "names": [...]}` of face_recognition 128-d embeddings. `load_encodings()` reads it from `encodingsP` into the globals `data`, `known_faces` and `known_faces_json`. It runs at import and again after each training run. `recognize_faces` takes a snapshot of `data` for each frame, so a reload can't pair the wrong encodings and names.
-- **Training:** `/train_model` starts `train_model()` in a thread. It sets the global `face_recognition_enabled = False` to pause recognition and re-encodes every image under `dataset/<PersonName>/` (the folder name is the label; HOG detector; `dataset` is relative to CWD). It then writes to `encodingsP`, calls `load_encodings()`, pushes the new face list to `/faces` clients and re-enables recognition.
-- **Camera / streaming:** `VideoCameraSingleton` shares one `cv2.VideoCapture(0)` (640x480, flipped vertically) behind a lock. `/video_feed` returns an MJPEG multipart stream from `gen()`, and each request also starts a daemon `recognize_faces` thread. Recognition is therefore only active while some client is viewing the stream, and every viewer adds another recognition thread.
-- **Lock control:** `lock()`/`unlock()`/`get_lock_status()` call the ESP32 endpoints `POST /lock`, `POST /unlock` and `GET /lock-status` (returns `{"status": 0|1}`, where 1 = locked). `/api/lock` and `/api/unlock` are the browser-facing proxies. Visiting `/` also sends a lock command.
-- **Socket.IO:** the default namespace broadcasts recognized names and training progress (through `handle_message`). The `/faces` namespace sends `known_faces_json` when a client connects. `index0.html` and `training.html` subscribe to both, and `index0.html` says "Do not touch this javascript especially the web sockets".
-- **Other routes:** `/capture_image` (POST base64 `imageData`, saved as one overwritten `captured_image.jpg`) and `/view_captured_image`. `/record_video` renders `record_video.html`, which doesn't exist. `SQLAlchemy` is imported but not used.
+- **`main.py`:** `create_app()` builds all the services, keeps them on `api.state.services`, and returns `socketio.ASGIApp(sio, other_asgi_app=api)`. Tests reach the services through `app.api.state.services`. Routes are closures inside `create_app`. On startup the lifespan starts the camera, locks the door (fail secure) and starts the recognizer.
+- **Threads, not asyncio, do the work.** `Camera` (camera.py) has one capture thread that keeps the latest frame; the MJPEG `/video_feed` and the recognizer both read from it. `Recognizer` (recognizer.py) is one always-on thread, independent of whether anyone is watching the stream. `Trainer` (training.py) runs one background training at a time. Worker threads push Socket.IO events through `emit()` in main.py, which uses `asyncio.run_coroutine_threadsafe` on the server loop.
+- **Data model (`db.py`):** `Person` (unique `name`, `access_granted`), `FaceImage` (`status`: `pending` → `encoded` / `no_face` / `failed`; `encoding` is 128 float64 values as bytes) and `AccessEvent`. Sync SQLAlchemy 2.0 on SQLite with WAL mode, and `create_all` at startup, since there are no migrations.
+- **Recognition index (`face_index.py`):** an in-memory numpy copy of all `encoded` rows, rebuilt with `index.reload(session)` after training and after any change to people or images. Matching uses the nearest encoding within `match_tolerance`, not the original's vote count, which misidentified Cliff as Victor on the bundled dataset. Access comes from `Person.access_granted`; the names are no longer hardcoded.
+- **Training:** a normal run encodes only `pending` images, and `full=True` re-encodes everything. It pauses the recognizer while running, commits after each image, then reloads the index and calls `recognizer.reset()`, so new faces work without a restart.
+- **Access decisions (`recognizer.py`):** the recognizer only acts when the person in view changes. If anyone in the frame is unknown or denied, that face decides the frame, which keeps the door locked. Every lock/unlock goes through `AccessController` (access.py) and is logged to `access_events`.
+- **`vision.py`** wraps cv2 and face_recognition with lazy imports. Call it as `vision.encode_faces(...)` through the module (not `from vision import ...`) so the test monkeypatching still works.
+
+## Frontend / Socket.IO contract
+
+`templates/index0.html` (dashboard) and `templates/training.html` use jQuery and Flowbite with socket.io-client 4.2:
+- Default namespace: `message` is a plain string with the recognized name ("X wants access"). `training` carries the trainer status dict.
+- `/faces` namespace: `message` is a **JSON string** holding a list of `{id, name, access_granted, images, encoded, pending, no_face}`. It is sent when a client connects and after every change to people, images or training.
+- All AJAX calls use relative URLs to the `/api/...` routes. The pages carry the original author's notes asking not to touch the socket and stream JS; keep the connection and stream code as it is.
 
 ## Design docs
 
