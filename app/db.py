@@ -59,6 +59,29 @@ class AccessEvent(Base):
     success: Mapped[bool] = mapped_column(Boolean)
 
 
+class User(Base):
+    """A portal account. Created from the command line: python -m app.cli create-user NAME"""
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class LoginSession(Base):
+    """A signed-in browser. The cookie holds a random token; only its SHA-256 is stored."""
+    __tablename__ = "login_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    user: Mapped[User] = relationship()
+
+
 def make_session_factory(database_url):
     connect_args = {}
     if database_url.startswith("sqlite"):

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in - Face Recognition Access Control</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script>
+        // On page load or when changing themes, best to add inline in `head` to avoid FOUC
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+
+<body class="min-h-screen flex flex-col dark:bg-gray-800">
+    <div class="flex items-center bg-blue-700 p-4 border-b-2 border-blue-700 dark:bg-gray-900">
+        <h2 class="text-white dark:text-gray-300">Face Recognition Access Control System</h2>
+    </div>
+
+    <div class="flex-1 flex items-center justify-center p-8">
+        <form method="post" action="/login" class="w-full max-w-sm rounded-lg shadow-lg p-6 border-2 border-blue-700 dark:bg-gray-900">
+            <h1 class="text-2xl font-bold mb-4 dark:text-white">Sign in</h1>
+
+            {% if no_users %}
+            <p class="mb-4 p-3 rounded bg-yellow-100 text-yellow-900 text-sm">
+                No accounts exist yet. On the Raspberry Pi, run
+                <code>python -m app.cli create-user &lt;name&gt;</code> to create one.
+            </p>
+            {% endif %}
+
+            {% if error %}
+            <p id="loginError" class="mb-4 p-3 rounded bg-red-100 text-red-800 text-sm">{{ error }}</p>
+            {% endif %}
+
+            <input type="hidden" name="next" value="{{ next }}">
+            <label for="username" class="block text-sm font-medium text-gray-700 dark:text-white">Username</label>
+            <input id="username" name="username" type="text" value="{{ username }}" autocomplete="username" required autofocus
+                   class="mt-1 mb-4 block w-full border border-gray-300 rounded-md p-2 dark:bg-gray-700 dark:text-white">
+            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-white">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required
+                   class="mt-1 mb-6 block w-full border border-gray-300 rounded-md p-2 dark:bg-gray-700 dark:text-white">
+            <button type="submit" class="block w-full px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800">Sign in</button>
+        </form>
+    </div>
+
+    <footer class="text-center py-4 bg-gray-900 text-white">
+        <div class="container mx-auto">
+            <p class="text-sm">Powered by Group 4 @ <span>2024</span></p>
+        </div>
+    </footer>
+</body>
+
+</html>

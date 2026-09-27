@@ -1,81 +1,76 @@
-# Facial Recognition Access Control and Surveillance System (FRACS) Description
+# Facial Recognition Access Control and Surveillance System (FRACS)
 
-## Overview
-FRACS is a comprehensive system designed for real-time access control and surveillance. It leverages facial recognition technology to grant or deny access to secured areas based on recognized faces. The system also includes features for live streaming, user management, and remote control capabilities.
+FRACS unlocks a door when the camera recognizes someone who has been granted access. A Raspberry Pi runs the camera, the face recognition and a web portal; an ESP32 drives the servo that moves the lock.
 
-## Features
-1. **Facial Recognition:** Utilizes machine learning algorithms to identify faces and grant access based on pre-defined permissions.
-2. **Real-Time Access Control:** Controls physical access to secured areas by interfacing with a servo motor to lock or unlock gates or doors.
-3. **Web Portal:** Provides a user-friendly interface for managing access permissions, viewing live streams, and monitoring system activity.
-4. **Live Streaming:** Allows users to view real-time video streams of monitored areas for surveillance purposes.
-5. **Remote Control:** Enables remote locking and unlocking of access points through the web portal, providing flexibility and convenience to users.
+**Status: prototype.** It works end to end, but it can be fooled by a photo and has other limits listed under [Known limitations](#known-limitations). Don't use it as the only protection for anything that matters.
 
-## Architecture
-The system comprises:
-- **Face Recognition Model:** Implements facial recognition algorithms for identifying individuals.
-- **Raspberry Pi:** Acts as the central processing unit, controlling the servo motor and interfacing with the face recognition model.
-- **ESP32:** Attached to the servo motor for physical control of access points.
-- **FastAPI Web Portal:** Hosted on the Raspberry Pi, it provides a web-based interface for users to interact with the system, with a SQLite database for enrolled people, their photos and an access log.
-- **Camera:** Captures live video streams for facial recognition and surveillance purposes.
+## What it does
 
-## Technologies
-- Machine Learning: Used for facial recognition.
-- Raspberry Pi: Controls hardware components and hosts the web portal.
-- ESP32: Interfaces with the servo motor for physical access control.
-- FastAPI + Socket.IO: Web framework and live updates for the user interface.
-- SQLite (via SQLAlchemy): Stores enrolled people, face encodings and access events.
-- OpenCV: Library for computer vision tasks, including face detection and recognition.
-- HTML/CSS/JavaScript: Front-end technologies for the web portal.
+- **Recognizes faces** from the Pi camera continuously and unlocks for people who are enrolled with access granted. An unknown face, or anyone denied access, keeps the door locked, including when they're in view alongside someone who is allowed in.
+- **Web portal** (login required) to:
+  - watch the live camera stream
+  - enroll people: capture photos from the Pi camera or upload them, review and delete photos
+  - grant or deny access per person
+  - train the recognizer on new photos, with live progress; new faces work as soon as training finishes
+  - lock or unlock the door remotely
+- **Logs** every lock and unlock (who or what triggered it, and whether the ESP32 confirmed it), available at `/api/events`.
 
-## User Interface
-The user interface features intuitive navigation, allowing users to easily manage access permissions, view live streams, and control access points. It includes interactive elements for unlocking or locking gates and displaying system status.
+## How it fits together
 
-## Functionality
-- **Facial Recognition:** The system continuously analyzes live video feeds, identifying faces and matching them against a database of authorized individuals.
-- **Access Control:** Upon recognition, the system triggers the servo motor to either unlock or lock access points based on predefined permissions.
-- **Web Portal:** Users can log in to the web portal to view live streams, manage access permissions, and remotely control access points.
-- **Surveillance:** The system provides real-time video feeds for monitoring and surveillance purposes, enhancing security measures.
+- **Raspberry Pi** (`app/`, started by `supercam.py`): FastAPI web portal with Socket.IO for live updates, the face recognition (dlib via the `face_recognition` library, HOG detector), and a SQLite database of people, photos, face encodings, portal accounts and the access log.
+- **ESP32** (`wifi_servo/`): a small web server on the local network that moves the servo. It only obeys commands signed with a secret it shares with the Pi.
+- **Camera** attached to the Pi.
+
+## When power or the network fails
+
+The system is **fail-secure**: when something breaks, the door ends up locked. That suits a door that protects a secured area, but it means **people inside must always be able to get out mechanically** (an inside handle or thumb-turn that doesn't depend on this system). Check your local fire and building rules before fitting it to a door people could be trapped behind.
+
+| What fails | What happens |
+|---|---|
+| ESP32 reboots or power returns | It drives the servo to locked before doing anything else. |
+| Pi, camera, Wi-Fi or network goes down | No new unlocks. Every unlock is temporary: the ESP32 relocks by itself after 5 seconds (`UNLOCK_MS` in the firmware), so a door can't be left unlocked by a lost connection. Remote unlock is unavailable until the network is back. |
+| ESP32 loses power | The servo holds its last position with little force. Because unlocks only last 5 seconds, that's almost always locked; if power is cut during an unlock, the door stays unlocked until power returns and the ESP32 relocks on boot. |
+| Pi restarts | The Pi sends a lock command on startup. |
+| Secrets missing or mismatched | The ESP32 refuses every command, so the door stays locked; the Pi logs an error. |
+
+You'll need a physical way in (a key or override) for when the system is down.
+
+Because unlocks are timed, the remote **Unlock** button also opens the door for 5 seconds. Someone who is recognized is let in once; if they stay in view, the door relocks and they need to step away for a few seconds (`FRACS_FORGET_AFTER`, default 5) and come back.
 
 ## Security
-- **Authentication:** Users are required to authenticate themselves before accessing the web portal.
-- **Authorization:** Access permissions are enforced based on user roles and privileges.
-- **Encryption:** Data transmission between components is encrypted to prevent unauthorized access.
-- **Data Protection:** Facial recognition data and user information are securely stored and protected from unauthorized access or tampering.
 
-## Performance
-- **Response Times:** The system maintains low latency for real-time facial recognition and access control.
-- **Throughput:** Handles multiple simultaneous requests efficiently, ensuring smooth operation.
-- **Scalability:** Designed to scale with the addition of more cameras or access points.
-- **Resource Utilization:** Optimizes resource usage to ensure efficient operation on Raspberry Pi hardware.
+What's in place:
+- **Portal login.** Every page, API route, the video stream and the live-update socket require a signed-in account. Accounts are created on the Pi from the command line (below). Passwords are stored as salted scrypt hashes. Sessions expire after 12 hours (`FRACS_SESSION_HOURS`) and are ended server-side on sign-out or password change. After 5 wrong passwords, logins from that address or for that username are refused for a minute. Requests from other websites are refused.
+- **Signed lock commands.** The ESP32 only accepts commands carrying an HMAC-SHA256 signature made with a shared secret over a single-use challenge, so nobody on the network can send `unlock` themselves or replay a captured command. See `wifi_servo/fracs_auth.h` for the protocol.
 
-## Integration
-The system can integrate with external databases for user management, APIs for additional functionality, and external services for enhanced surveillance capabilities.
+What isn't:
+- **Encryption is off by default.** The portal is plain HTTP unless you give it a certificate (`FRACS_SSL_CERTFILE`, `FRACS_SSL_KEYFILE`); without one, passwords cross the local network unencrypted. The link to the ESP32 is plain HTTP: commands can't be forged, but they can be seen.
+- **No roles.** Every account can do everything, including managing other people's access.
+- **Stored data isn't encrypted.** Photos, face encodings and the database sit in `data/` on the Pi's SD card; anyone with the card has them. Face data is sensitive personal data in many countries, so get consent from the people you enroll and delete what you no longer need.
 
-## Maintenance and Support
-Regular maintenance procedures include software updates, database backups, and system health checks. Troubleshooting guides and user manuals are provided for ongoing support.
+## Known limitations
 
-## Requirements
-System requirements include hardware components (Raspberry Pi, ESP32, camera), software dependencies (FastAPI, OpenCV, face_recognition), and network connectivity for remote access.
-
-## Use Cases
-1. **Office Access Control:** Employees use facial recognition to gain access to secure areas within the office premises.
-2. **Home Security:** Homeowners remotely monitor their property and control access to entry points using the web portal.
-3. **Retail Store Surveillance:** Store managers monitor customer activity and manage access to restricted areas in real-time.
-4. **Educational Institutions:** Schools or universities use the system to control access to classrooms, laboratories, or administrative offices based on user permissions.
-5. **Health Institutions:** Hospitals or laboratories use the system to control access to medication and wards.
-
-
-
-
+- **No liveness detection.** A photo or video of an enrolled person held up to the camera will probably unlock the door.
+- **Lookalikes.** Matching takes the closest enrolled face within a distance of 0.6 (`FRACS_MATCH_TOLERANCE`). Someone who isn't enrolled but looks enough like someone who is can be let in as them. The limit hasn't been tuned on real data yet.
+- **Single-frame decisions.** One frame is enough to unlock.
+- **Accuracy and speed haven't been measured** on the Pi or on live camera footage. Recognition runs on the Pi's CPU and pauses while training.
+- Signing out doesn't close live-update connections already open in other tabs (they stop at the next page load). Login lockouts reset when the server restarts.
 
 ## Setup
 
-On the Raspberry Pi:
+### ESP32
+
+1. In `wifi_servo/wifi_servo.ino`, set `ssid` and `password` for your Wi-Fi, `servoPin`, and `LOCK_SECRET` to a long random value, for example from `python -c "import secrets; print(secrets.token_hex(32))"`. Until `LOCK_SECRET` is changed, the ESP32 refuses every command.
+2. Flash it with the Arduino IDE (libraries: `ESPAsyncWebServer`, `ESP32Servo`). Keep `fracs_auth.h` in the same folder.
+
+### Raspberry Pi
 
 ```bash
-pip install -r requirements.txt          # dlib must be installable; on a Pi use piwheels or your distro's package
-export FRACS_ESP32_URL=http://<esp32-ip>  # the lock controller running wifi_servo/wifi_servo.ino
-python supercam.py                       # serves the portal on http://<pi>:8000
+pip install -r requirements.txt        # dlib must be installable; on a Pi use piwheels or your distro's package
+export FRACS_ESP32_URL=http://<esp32-ip>
+export FRACS_ESP32_SECRET=<the same value as LOCK_SECRET>
+python -m app.cli create-user <name>  # prompts for a password (8+ characters)
+python supercam.py                     # serves the portal on http://<pi>:8000
 ```
 
 To move the photos in `dataset/<PersonName>/` into the database and train on them in one step:
@@ -84,16 +79,43 @@ To move the photos in `dataset/<PersonName>/` into the database and train on the
 python -m app.cli import-dataset dataset --deny Pemphero --train
 ```
 
-After that, people are managed from the portal: add a person, capture photos from the camera or upload them, choose whether they are granted access, and press **Train**. Training only encodes new photos, and new faces are recognized as soon as it finishes; no restart is needed.
+After that, people are managed from the portal: add a person, capture or upload a few photos, choose whether they're granted access, and press **Train**.
 
-Settings are environment variables (see `app/config.py`): `FRACS_DATA_DIR` (database and photos, default `./data`), `FRACS_ESP32_URL`, `FRACS_CAMERA_INDEX`, `FRACS_CAMERA_FLIP`, `FRACS_MATCH_TOLERANCE`, `FRACS_RECOGNITION`, `FRACS_CORS_ORIGINS`, `FRACS_HOST`, `FRACS_PORT`.
+Account commands: `python -m app.cli create-user | set-password | delete-user <name>`, `python -m app.cli list-users`. Changing a password signs that account out everywhere.
 
-Tests (these don't need a camera, an ESP32 or dlib): `pip install -r requirements-dev.txt && pytest`.
+Back up the `data/` folder; it holds the database and every enrolled photo.
+
+### Settings
+
+All settings are environment variables (see `app/config.py`):
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `FRACS_ESP32_URL` | unset | ESP32 address. Unset = lock commands are skipped. |
+| `FRACS_ESP32_SECRET` | unset | Must match `LOCK_SECRET` in the firmware. Unset = lock commands are skipped. |
+| `FRACS_DATA_DIR` | `./data` | Database and enrolled photos. |
+| `FRACS_SSL_CERTFILE`, `FRACS_SSL_KEYFILE` | unset | Serve the portal over HTTPS. |
+| `FRACS_SESSION_HOURS` | 12 | How long a login lasts. |
+| `FRACS_MATCH_TOLERANCE` | 0.6 | Max face distance counted as a match; lower is stricter. |
+| `FRACS_FORGET_AFTER` | 5 | Seconds with no face in view before the same person can trigger an unlock again. |
+| `FRACS_CAMERA_INDEX`, `FRACS_CAMERA_FLIP` | 0, on | Which camera, and whether to flip the image vertically. |
+| `FRACS_RECOGNITION` | on | Turn automatic recognition off (portal only). |
+| `FRACS_HOST`, `FRACS_PORT` | 0.0.0.0, 8000 | Where the portal listens. |
+| `FRACS_CORS_ORIGINS` | unset | Extra origins allowed to call the API. |
+
+## Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+The tests don't need a camera, an ESP32 or dlib (`requirements-dev.txt` leaves `face_recognition` out). If `g++` and the OpenSSL headers are installed, they also compile the firmware's authentication code (`wifi_servo/fracs_auth.h`) and check it against the Pi's. The rest of the firmware isn't compiled by the tests; build it with the Arduino IDE.
+
+GitHub Actions runs the same tests on every pull request and every push to `main` (`.github/workflows/tests.yml`). There, a skipped test counts as a failure, so the firmware and Socket.IO checks can't silently drop out.
 
 ## Contributing
 Contributions are welcome! Please fork the repository, make your changes, and submit a pull request. For major changes, please open an issue first to discuss the proposed changes.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-

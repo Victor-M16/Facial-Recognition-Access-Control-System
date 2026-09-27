@@ -1,5 +1,6 @@
 import logging
 import threading
+import time
 
 from . import vision
 
@@ -13,13 +14,17 @@ class Recognizer:
     the Pi's CPU goes to encoding.
     """
 
-    def __init__(self, camera, index, access, notify, detection_model="hog"):
+    def __init__(self, camera, index, access, notify, detection_model="hog", forget_after=5.0,
+                 clock=time.monotonic):
         self.camera = camera
         self.index = index
         self.access = access
         self.notify = notify
         self.detection_model = detection_model
+        self.forget_after = forget_after
+        self.clock = clock
         self.current = None
+        self.last_seen = 0.0
         self._paused = threading.Event()
         self._stop = threading.Event()
         self._thread = None
@@ -67,8 +72,14 @@ class Recognizer:
     def process(self, frame):
         rgb = vision.bgr_to_rgb(frame)
         matches = [self.index.match(e) for e in vision.encode_faces(rgb, self.detection_model)]
+        now = self.clock()
         if not matches:
+            # The ESP32 relocks by itself shortly after an unlock. Once nobody has been in
+            # view for a while, forget who was there, so they're let in again when they return
+            if self.current is not None and now - self.last_seen >= self.forget_after:
+                self.current = None
             return
+        self.last_seen = now
         # If anyone in view is unknown or denied, that decides the frame, so a
         # granted face can't hold the door open for someone else
         denied = [m for m in matches if not m.access_granted]

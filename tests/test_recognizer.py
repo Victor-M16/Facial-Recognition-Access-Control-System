@@ -90,3 +90,33 @@ def test_nearest_face_wins_over_the_person_with_more_photos():
     far = np.zeros(128)
     far[5] = 1.0
     assert index.match(far).name == UNKNOWN
+
+
+def test_person_is_let_in_again_after_leaving(access, notified, monkeypatch):
+    import app.vision as vision
+
+    now = [0.0]
+    faces = []
+    monkeypatch.setattr(vision, "encode_faces", lambda rgb, model="hog": faces)
+
+    class Index:
+        def match(self, encoding):
+            return ALICE
+
+    recognizer = Recognizer(camera=None, index=Index(), access=access, notify=notified.append,
+                            forget_after=5.0, clock=lambda: now[0])
+    faces[:] = [0]
+    recognizer.process(solid_image(100))           # Alice arrives: unlock
+    faces[:] = []
+    now[0] = 3.0
+    recognizer.process(solid_image(100))           # looked away briefly: still remembered
+    faces[:] = [0]
+    recognizer.process(solid_image(100))
+    assert access.calls == [("unlock", "Alice")]
+
+    faces[:] = []
+    now[0] = 9.0
+    recognizer.process(solid_image(100))           # gone for over 5s: forgotten
+    faces[:] = [0]
+    recognizer.process(solid_image(100))           # comes back: unlocked again
+    assert access.calls == [("unlock", "Alice"), ("unlock", "Alice")]
