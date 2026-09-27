@@ -144,8 +144,8 @@ def test_remote_lock_routes_log_events(client, services, lock):
     assert client.get("/api/lock/status").json() == {"status": 1}
 
     events = client.get("/api/events").json()
-    assert [(e["action"], e["source"], e["success"]) for e in events] == [
-        ("lock", "remote", False), ("unlock", "remote", True)]
+    assert [(e["action"], e["source"], e["success"], e["name"]) for e in events] == [
+        ("lock", "remote", False, "admin"), ("unlock", "remote", True, "admin")]
 
 
 def test_startup_locks_the_door(settings, camera, lock):

@@ -24,6 +24,8 @@ class Settings:
     database_url: str = field(default_factory=lambda: os.environ.get("FRACS_DATABASE_URL", ""))
     # Base URL of the ESP32 lock controller, e.g. http://192.168.1.50. Unset = lock calls are skipped
     esp32_url: str = field(default_factory=lambda: os.environ.get("FRACS_ESP32_URL", "").rstrip("/"))
+    # Shared with LOCK_SECRET in wifi_servo.ino; every command is signed with it
+    esp32_secret: str = field(default_factory=lambda: os.environ.get("FRACS_ESP32_SECRET", ""))
     esp32_timeout: float = field(default_factory=lambda: float(os.environ.get("FRACS_ESP32_TIMEOUT", "3")))
     camera_index: int = field(default_factory=lambda: int(os.environ.get("FRACS_CAMERA_INDEX", "0")))
     # The original Pi camera mount was upside down, so frames were flipped vertically
@@ -33,6 +35,11 @@ class Settings:
     match_tolerance: float = field(default_factory=lambda: float(os.environ.get("FRACS_MATCH_TOLERANCE", "0.6")))
     # "hog" is the only practical detector on a Raspberry Pi; "cnn" needs a GPU
     detection_model: str = field(default_factory=lambda: os.environ.get("FRACS_DETECTION_MODEL", "hog"))
+    # After this many seconds with no face in view, the recognizer forgets who it last saw,
+    # so the same person coming back is recognized (and let in) again
+    forget_after: float = field(default_factory=lambda: float(os.environ.get("FRACS_FORGET_AFTER", "5")))
+    # How long a portal login lasts
+    session_hours: float = field(default_factory=lambda: float(os.environ.get("FRACS_SESSION_HOURS", "12")))
     cors_origins: list = field(default_factory=lambda: _env_list("FRACS_CORS_ORIGINS"))
 
     def __post_init__(self):

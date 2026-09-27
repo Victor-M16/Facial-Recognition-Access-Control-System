@@ -99,7 +99,21 @@ def services(app):
     return app.api.state.services
 
 
+USERNAME, PASSWORD = "admin", "correct horse battery"
+
+
 @pytest.fixture
-def client(app):
+def anon(app):
+    """A client that hasn't signed in."""
     with TestClient(app) as c:
+        yield c
+
+
+@pytest.fixture
+def client(app, services):
+    """A client signed in to the portal."""
+    services.auth.create_user(USERNAME, PASSWORD)
+    with TestClient(app) as c:
+        r = c.post("/login", data={"username": USERNAME, "password": PASSWORD}, follow_redirects=False)
+        assert r.status_code == 303
         yield c
