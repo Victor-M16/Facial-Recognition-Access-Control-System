@@ -6,6 +6,7 @@
     python -m app.cli set-password NAME       (also signs that user out everywhere)
     python -m app.cli delete-user NAME
     python -m app.cli list-users
+    python -m app.cli evaluate-threshold [--limits 0.4 0.45 ...] [--from-pickle encodings.pickle]
 
 Pass --password-stdin to read the password from standard input instead of prompting.
 """
@@ -19,6 +20,7 @@ from sqlalchemy.exc import IntegrityError
 
 from . import storage, vision
 from .auth import Auth
+from .evaluate import DEFAULT_LIMITS, evaluate, format_report, load_encodings
 from .config import Settings
 from .db import FaceImage, Person, make_session_factory
 from .face_index import FaceIndex
@@ -87,6 +89,10 @@ def main(argv=None):
         cmd.add_argument("--password-stdin", action="store_true", help="read the password from stdin")
     sub.add_parser("delete-user", help="delete a portal account").add_argument("username")
     sub.add_parser("list-users", help="list portal accounts")
+    ev = sub.add_parser("evaluate-threshold", help="measure match limits on the enrolled faces")
+    ev.add_argument("--limits", type=float, nargs="+", default=list(DEFAULT_LIMITS))
+    ev.add_argument("--from-pickle", metavar="PATH",
+                    help="use a legacy encodings.pickle instead of the database")
     args = parser.parse_args(argv)
 
     settings = Settings()
@@ -99,8 +105,28 @@ def main(argv=None):
     elif args.command == "train":
         status = run_training(settings, session_factory, full=args.full)
         return 0 if status["state"] == "done" else 1
+    elif args.command == "evaluate-threshold":
+        return evaluate_threshold(args, settings, session_factory)
     else:
         return manage_users(args, Auth(session_factory))
+    return 0
+
+
+def evaluate_threshold(args, settings, session_factory):
+    if args.from_pickle:
+        import pickle
+        with open(args.from_pickle, "rb") as f:
+            data = pickle.load(f)
+        encodings, names = data["encodings"], data["names"]
+    else:
+        with session_factory() as session:
+            encodings, names = load_encodings(session)
+    try:
+        result = evaluate(encodings, names, sorted(set(args.limits) | {settings.match_tolerance}))
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    print(format_report(result, current_limit=settings.match_tolerance))
     return 0
 
 

@@ -15,6 +15,7 @@ class Match:
     name: str
     person_id: int | None
     access_granted: bool
+    distance: float | None = None   # to the closest stored face; logged to help tune the limit
 
 
 @dataclass(frozen=True)
@@ -31,7 +32,7 @@ class FaceIndex:
     swaps in a new one, so recognition never sees a half-built index.
     """
 
-    def __init__(self, tolerance=0.6):
+    def __init__(self, tolerance=0.4):
         self.tolerance = tolerance
         self._lock = threading.Lock()
         self._snapshot = _Snapshot(np.empty((0, vision.ENCODING_SIZE)), np.empty(0, dtype=int), {})
@@ -66,8 +67,9 @@ class FaceIndex:
             return Match(UNKNOWN, None, False)
         distances = np.linalg.norm(snap.encodings - encoding, axis=1)
         best = int(np.argmin(distances))
-        if distances[best] > self.tolerance:
-            return Match(UNKNOWN, None, False)
+        distance = float(distances[best])
+        if distance > self.tolerance:
+            return Match(UNKNOWN, None, False, distance)
         person_id = int(snap.person_ids[best])
         name, access = snap.people[person_id]
-        return Match(name, person_id, access)
+        return Match(name, person_id, access, distance)

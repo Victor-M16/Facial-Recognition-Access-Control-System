@@ -13,6 +13,7 @@ FRACS (Facial Recognition Access Control and Surveillance System) is a Raspberry
 - **CI:** `.github/workflows/tests.yml` runs `pytest` on every PR and push to `main`, with g++ and libssl-dev installed. When `CI` is set, `tests/conftest.py` turns any skipped test into a failure.
 - **Tests:** `pytest` (config in `pytest.ini`). Run one test with `pytest tests/test_api.py::test_people_crud`. The tests need no camera, ESP32 or dlib: `tests/conftest.py` replaces `vision.encode_faces` with a fake that turns image brightness into an identity, and passes a `FakeCamera` / `FakeLock` into `create_app(..., start_background=False)`. The `client` fixture is signed in; `anon` is not. `tests/test_firmware_auth.py` compiles `wifi_servo/fracs_auth.h` with g++ and OpenSSL (skipped if either is missing) and checks its signatures match `app/lock.py`.
 - **Portal accounts:** `python -m app.cli create-user NAME` (prompts; `--password-stdin` for scripts), `set-password`, `delete-user`, `list-users`. There is no sign-up page; the login page says so when no accounts exist.
+- **Check the match limit:** `python -m app.cli evaluate-threshold [--limits ...] [--from-pickle encodings.pickle]` (app/evaluate.py) reports, per limit, how many enrolled photos are accepted and how many would let a stranger in. Re-run it before changing `FRACS_MATCH_TOLERANCE`.
 - **Import the legacy `dataset/<Name>/*.jpg` folders:** `python -m app.cli import-dataset dataset [--deny NAME] [--train]`. Train from the command line with `python -m app.cli train [--full]`.
 - **ESP32 firmware:** flash `wifi_servo/wifi_servo.ino` with the Arduino IDE. It needs the `ESPAsyncWebServer` and `ESP32Servo` libraries. Set `ssid`/`password`, `servoPin` and `LOCK_SECRET` before flashing. The full sketch isn't compiled by the tests, only `fracs_auth.h`.
 - There is no linter config and no frontend build step. The pages load their JS/CSS from CDNs; `templates/node_modules` is committed but mostly unused.
@@ -29,7 +30,7 @@ Everything is set through `FRACS_*` environment variables, read in `app/config.p
 - **Failure behaviour is fail-secure** and is documented in the README: the ESP32 locks on power-up, every unlock relocks on the ESP32 after `UNLOCK_MS` (5 s), and the Pi locks on startup. The recognizer forgets the last person after `forget_after` seconds with no face in view, so a returning person is let in again.
 - **Threads, not asyncio, do the work.** `Camera` (camera.py) has one capture thread that keeps the latest frame; the MJPEG `/video_feed` and the recognizer both read from it. `Recognizer` (recognizer.py) is one always-on thread, independent of whether anyone is watching the stream. `Trainer` (training.py) runs one background training at a time. Worker threads push Socket.IO events through `emit()` in main.py, which uses `asyncio.run_coroutine_threadsafe` on the server loop.
 - **Data model (`db.py`):** `Person` (unique `name`, `access_granted`), `FaceImage` (`status`: `pending` → `encoded` / `no_face` / `failed`; `encoding` is 128 float64 values as bytes) and `AccessEvent`. Sync SQLAlchemy 2.0 on SQLite with WAL mode, and `create_all` at startup, since there are no migrations.
-- **Recognition index (`face_index.py`):** an in-memory numpy copy of all `encoded` rows, rebuilt with `index.reload(session)` after training and after any change to people or images. Matching uses the nearest encoding within `match_tolerance`, not the original's vote count, which misidentified Cliff as Victor on the bundled dataset. Access comes from `Person.access_granted`; the names are no longer hardcoded.
+- **Recognition index (`face_index.py`):** an in-memory numpy copy of all `encoded` rows, rebuilt with `index.reload(session)` after training and after any change to people or images. Matching uses the nearest encoding within `match_tolerance`, not the original's vote count, which misidentified Cliff as Victor on the bundled dataset. The default limit is 0.4, not face_recognition's 0.6: at 0.6, 82 of the 94 bundled photos would have been let in as someone else when their owner wasn't enrolled, and the closest two different people (Cliff and Victor) are about 0.45 apart. The README's "Choosing the match limit" section has the numbers; update it if the default changes. `Match.distance` is logged for each change of person in view. Access comes from `Person.access_granted`; the names are no longer hardcoded.
 - **Training:** a normal run encodes only `pending` images, and `full=True` re-encodes everything. It pauses the recognizer while running, commits after each image, then reloads the index and calls `recognizer.reset()`, so new faces work without a restart.
 - **Access decisions (`recognizer.py`):** the recognizer only acts when the person in view changes. If anyone in the frame is unknown or denied, that face decides the frame, which keeps the door locked. Every lock/unlock goes through `AccessController` (access.py) and is logged to `access_events`.
 - **Schema changes:** tables are created with `create_all` and there are no migrations. New tables are fine on an existing Pi database, but new columns on existing tables won't be added automatically.
@@ -45,3 +46,18 @@ Everything is set through `FRACS_*` environment variables, read in `app/config.p
 ## Design docs
 
 The repo root has the use case diagram, CFG, state machine and concurrent process model (`*.drawio`, `*.png`, `*.jpg`) that describe the intended system behavior.
+
+## Merging pull requests
+
+`main` is protected: the `tests` check must pass and the branch must be up to date before a PR can merge.
+
+Claude may merge its own PRs into `main`, with a merge commit like the existing history, once:
+- the `tests` check has passed on the PR's latest commit, and the branch is up to date with `main` with no conflicts, and
+- there are no unresolved review threads or requested changes.
+
+Ask the user before merging instead, however green the PR is, when it touches:
+- `wifi_servo/`: CI only compiles `fracs_auth.h`, so firmware changes must be flashed and tested on the real servo first.
+- Login or the lock protocol: `app/auth.py`, `app/lock.py`, or `require_user`, the `protected` router or the Socket.IO checks in `app/main.py`.
+- Who gets let in: `app/face_index.py`, `app/recognizer.py`, `app/access.py`, or the `match_tolerance` / `forget_after` defaults in `app/config.py`.
+
+Never bypass branch protection, push directly to `main`, or merge a PR someone else opened.
