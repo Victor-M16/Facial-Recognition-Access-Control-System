@@ -63,6 +63,19 @@
                 <h2 class="text-xl font-semibold text-center text-gray-800 dark:text-white"> <div id="currentNameDisplay" ></div></h2>
             </div>
 
+            <!-- Enrollment Section -->
+            <div class="p-4">
+                <label for="personSelect" class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Enroll images for</label>
+                <select id="personSelect" class="block w-full mb-2 border border-gray-300 rounded-md p-2 dark:bg-gray-700 dark:text-white"></select>
+                <div class="flex mb-2">
+                    <input id="newPersonName" type="text" maxlength="64" placeholder="New person's name" class="flex-1 border border-gray-300 rounded-l-md p-2 dark:bg-gray-700 dark:text-white">
+                    <button id="addPersonBtn" class="px-4 py-2 bg-blue-700 text-white rounded-r-md hover:bg-blue-800">
+                        <i class="fas fa-user-plus"></i> Add person
+                    </button>
+                </div>
+                <p id="enrollStatus" class="text-sm text-gray-700 dark:text-gray-300 mb-2"></p>
+            </div>
+
             <!-- Buttons Section -->
             <div class="p-4">
                 <button id="btnCaptureImage" onclick="captureImage()" class="block w-full px-4 py-2 mb-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:bg-blue-600 dark:hover:bg-blue-600 dark:focus:bg-blue-600">
@@ -72,10 +85,12 @@
                     <i class="fas fa-file-upload"></i>  Upload
                 </button>
 
-                <button class="block w-full px-4 py-2 mb-2 bg-yellow-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:bg-blue-600 dark:hover:bg-green-600 dark:focus:bg-green-600" onclick="window.location.href='/train_model'">
+                <button id="trainBtn" class="block w-full px-4 py-2 mb-2 bg-yellow-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:bg-blue-600 dark:hover:bg-green-600 dark:focus:bg-green-600">
                     <i class="fas fa-graduation-cap"></i> Train
                 </button>
-                
+                <button id="fullTrainBtn" class="block w-full px-4 py-1 text-sm text-gray-600 underline dark:text-gray-300">
+                    Re-encode all images
+                </button>
             </div>
         </div>
 
@@ -89,8 +104,10 @@
         <table id="authorizedListTable" class="w-full table-auto">
             <thead>
                 <tr>
-                    <th class="w-1/2 border-b-2 border-gray-300 dark:bg-gray-600 dark:text-white">Name</th>
-                    <th class="w-1/2 border-b-2 border-gray-300 dark:bg-gray-600 dark:text-white">Access</th>
+                    <th class="border-b-2 border-gray-300 dark:bg-gray-600 dark:text-white">Name</th>
+                    <th class="border-b-2 border-gray-300 dark:bg-gray-600 dark:text-white">Images</th>
+                    <th class="border-b-2 border-gray-300 dark:bg-gray-600 dark:text-white">Access</th>
+                    <th class="border-b-2 border-gray-300 dark:bg-gray-600 dark:text-white"></th>
 
                 </tr>
             </thead>
@@ -135,12 +152,12 @@
             <div class="p-4 md:p-5 space-y-4">
                 <form class="space-y-4">
                     <div>
-                        <label for="file" class="block text-sm font-medium text-gray-700">Select a file</label>
-                        <input id="file" name="file" type="file" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <label for="file" class="block text-sm font-medium text-gray-700 dark:text-white">Select face images of <span id="uploadPersonName"></span> (one person per photo)</label>
+                        <input id="file" name="file" type="file" multiple accept="image/*" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                     </div>
                     <div class="flex justify-end">
-                        <button  type="button" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600">Upload</button>
-                        <button type="button" class="ml-2 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">Cancel</button>
+                        <button id="uploadBtn" type="button" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600">Upload</button>
+                        <button type="button" data-modal-hide="default-modal" class="ml-2 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -149,7 +166,18 @@
 </div>
     </div>
 
-    
+<div id="photos-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-3xl max-h-full">
+        <div class="relative bg-white border-2 border-blue-700 rounded-lg shadow dark:bg-gray-900">
+            <div class="flex items-center justify-between p-4 border-b rounded-t dark:border-gray-600">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Photos of <span id="photosPersonName"></span></h3>
+                <button type="button" id="photosCloseBtn" class="text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="px-4 pt-2 text-sm text-gray-600 dark:text-gray-300">Photos marked "no face" were skipped by training; delete them and add better ones.</p>
+            <div id="photosGrid" class="p-4 grid grid-cols-2 sm:grid-cols-4 gap-4"></div>
+        </div>
+    </div>
+</div>
 
     <footer class="text-center py-4 bg-gray-900 text-white">
         <div class="container mx-auto">
@@ -162,13 +190,6 @@
  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#authorizedListTable').DataTable({
-                responsive: true
-            });
-        });
-    </script>
 
     
     <!-- Don't touch this video streaming javascript either -->
@@ -208,38 +229,14 @@
 
 
     socket_faces.on('message', function(message) {
-        console.log("Received JSON object:", message);
-    
-        // Parse the JSON object
-        var jsonObject = JSON.parse(message);
-    
-        // Clear existing table rows
-        $("#authorizedListTable tbody").empty();
-        // Iterate over the keys of the JSON object
-
-        for (var key in jsonObject) {
-        if (jsonObject.hasOwnProperty(key)) {
-            // Extract the name corresponding to the key
-            var name = jsonObject[key];
-            console.log("Name:", name);
-
-            // Create a new row in the table with appropriate styling
-            var newRow = $("<tr>").addClass("border-b border-gray-300 dark:bg-gray-600 dark:text-white");
-            newRow.append($("<td>").addClass("border-b border-gray-300 dark:bg-gray-600 dark:text-white").text(name));
-            if (name !== "Pemphero") {
-                newRow.append($("<span>").addClass("bg-green-200 text-green-800 py-1 px-2 rounded-full dark:bg-green-500 dark:text-green-200").text("Granted"));
-            } else {
-                newRow.append($("<span>").addClass("bg-red-200 text-red-800 py-1 px-2 rounded-full dark:bg-red-500 dark:text-red-200").text("Denied"));
-            }
-
-                            // Append the new row to the table body
-                            $("#authorizedListTable tbody").append(newRow);
-        }
-    }
-        
+        // message is a JSON list of {id, name, access_granted, images, encoded, pending, no_face}
+        renderPeople(JSON.parse(message));
     });
-    
-    
+
+    // Live training progress (the /training page shows the full view)
+    socket.on('training', function(status) {
+        $("#enrollStatus").text(status.message);
+    });
     </script>
 
     
@@ -286,17 +283,174 @@ themeToggleBtn.addEventListener('click', function() {
 
 </script>
 <script>
+    var people = [];
+
+    function setStatus(text) {
+        $("#enrollStatus").text(text);
+    }
+
+    function errorText(xhr, fallback) {
+        return (xhr.responseJSON && typeof xhr.responseJSON.detail === 'string') ? xhr.responseJSON.detail : fallback;
+    }
+
+    function selectedPerson() {
+        var id = parseInt($("#personSelect").val());
+        return people.find(function(p) { return p.id === id; });
+    }
+
+    function renderPeople(list) {
+        people = list;
+        var selected = $("#personSelect").val();
+        var select = $("#personSelect").empty();
+        if (!list.length) {
+            select.append($("<option>").val("").text("Add a person first"));
+        }
+        var tbody = $("#authorizedListTable tbody").empty();
+        list.forEach(function(p) {
+            select.append($("<option>").val(p.id).text(p.name));
+
+            var row = $("<tr>").addClass("border-b border-gray-300 dark:bg-gray-600 dark:text-white");
+            row.append($("<td>").addClass("py-2").text(p.name));
+            var images = p.encoded + "/" + p.images + " trained";
+            if (p.pending) images += ", " + p.pending + " new";
+            row.append($("<td>").addClass("text-sm").text(images));
+
+            var badge = p.access_granted
+                ? $("<button>").addClass("bg-green-200 text-green-800 py-1 px-2 rounded-full dark:bg-green-500 dark:text-green-200").text("Granted")
+                : $("<button>").addClass("bg-red-200 text-red-800 py-1 px-2 rounded-full dark:bg-red-500 dark:text-red-200").text("Denied");
+            badge.attr("title", "Click to " + (p.access_granted ? "deny" : "grant") + " access")
+                .click(function() { setAccess(p, !p.access_granted); });
+            row.append($("<td>").append(badge));
+
+            var actions = $("<td>").addClass("whitespace-nowrap");
+            actions.append($("<button>").addClass("text-blue-600 dark:text-blue-300 mr-3").attr("title", "Photos")
+                .html('<i class="fas fa-images"></i>').click(function() { showPhotos(p); }));
+            actions.append($("<button>").addClass("text-red-600 dark:text-red-300").attr("title", "Remove")
+                .html('<i class="fas fa-trash"></i>').click(function() { removePerson(p); }));
+            row.append(actions);
+            tbody.append(row);
+        });
+        if (selected && list.some(function(p) { return String(p.id) === selected; })) {
+            select.val(selected);
+        }
+    }
+
+    function refreshPeople() {
+        $.getJSON('/api/people', renderPeople);
+    }
+
+    function addPerson() {
+        var name = $("#newPersonName").val().trim();
+        if (!name) return;
+        $.ajax({url: '/api/people', type: 'POST', contentType: 'application/json',
+                data: JSON.stringify({name: name, access_granted: true})})
+            .done(function(person) {
+                $("#newPersonName").val("");
+                $("#personSelect").append($("<option>").val(person.id).text(person.name)).val(person.id);
+                setStatus(person.name + " added. Capture or upload a few photos, then train.");
+            })
+            .fail(function(xhr) { setStatus(errorText(xhr, "Could not add person")); });
+    }
+
+    function setAccess(person, granted) {
+        $.ajax({url: '/api/people/' + person.id, type: 'PATCH', contentType: 'application/json',
+                data: JSON.stringify({access_granted: granted})})
+            .fail(function(xhr) { setStatus(errorText(xhr, "Could not change access")); });
+    }
+
+    function removePerson(person) {
+        if (!confirm("Remove " + person.name + " and all their photos?")) return;
+        $.ajax({url: '/api/people/' + person.id, type: 'DELETE'})
+            .done(function() { setStatus(person.name + " removed"); })
+            .fail(function(xhr) { setStatus(errorText(xhr, "Could not remove person")); });
+    }
+
+    function captureImage() {
+        var person = selectedPerson();
+        if (!person) { setStatus("Choose or add a person first"); return; }
+        $.post('/api/people/' + person.id + '/capture')
+            .done(function() { setStatus("Captured a photo of " + person.name + ". Press Train when done."); })
+            .fail(function(xhr) { setStatus(errorText(xhr, "Capture failed")); });
+    }
+
+    function uploadImages() {
+        var person = selectedPerson();
+        var files = $("#file")[0].files;
+        if (!person) { setStatus("Choose or add a person first"); return; }
+        if (!files.length) return;
+        var form = new FormData();
+        for (var i = 0; i < files.length; i++) form.append("files", files[i]);
+        $.ajax({url: '/api/people/' + person.id + '/images', type: 'POST', data: form,
+                processData: false, contentType: false})
+            .done(function(body) {
+                var text = "Uploaded " + body.added.length + " photo(s) of " + person.name;
+                if (body.rejected.length) text += "; skipped " + body.rejected.join(", ");
+                setStatus(text + ". Press Train when done.");
+                $("#file").val("");
+                $('[data-modal-hide="default-modal"]').first().click();
+            })
+            .fail(function(xhr) { setStatus(errorText(xhr, "Upload failed")); });
+    }
+
+    var photosModal = null;
+
+    function showPhotos(person) {
+        $("#photosPersonName").text(person.name);
+        var grid = $("#photosGrid").empty();
+        $.getJSON('/api/people/' + person.id + '/images', function(images) {
+            if (!images.length) grid.append($("<p>").addClass("dark:text-white").text("No photos yet"));
+            images.forEach(function(image) {
+                var labels = {pending: "not trained yet", encoded: "trained", no_face: "no face", failed: "unreadable"};
+                var cell = $("<div>").addClass("text-center text-sm dark:text-white");
+                cell.append($("<img>").attr("src", image.url).addClass("w-full h-32 object-cover rounded"));
+                cell.append($("<span>").addClass(image.status === "encoded" ? "text-green-600" : "text-yellow-600")
+                    .text(labels[image.status] || image.status));
+                cell.append($("<button>").addClass("ml-2 text-red-600").html('<i class="fas fa-trash"></i>')
+                    .click(function() {
+                        $.ajax({url: '/api/images/' + image.id, type: 'DELETE'}).done(function() { cell.remove(); });
+                    }));
+                grid.append(cell);
+            });
+        });
+        photosModal = photosModal || new Modal(document.getElementById('photos-modal'));
+        photosModal.show();
+    }
+
+    function startTraining(full) {
+        $.ajax({url: '/api/training', type: 'POST', contentType: 'application/json',
+                data: JSON.stringify({full: full})})
+            .always(function(_, __, xhr) {
+                // 409 means a run is already going; either way, go watch it
+                window.location.href = '/training';
+            });
+    }
+
     $(document).ready(function() {
+        refreshPeople();
+
+        $('#addPersonBtn').click(addPerson);
+        $('#newPersonName').keypress(function(e) { if (e.which === 13) addPerson(); });
+        $('#uploadBtn').click(uploadImages);
+        $('#trainBtn').click(function() { startTraining(false); });
+        $('#fullTrainBtn').click(function() {
+            if (confirm("Re-encode every photo? This can take a while on the Pi.")) startTraining(true);
+        });
+        $('#photosCloseBtn').click(function() { if (photosModal) photosModal.hide(); });
+        $('[data-modal-toggle="default-modal"]').click(function() {
+            var person = selectedPerson();
+            $("#uploadPersonName").text(person ? person.name : "(choose a person first)");
+        });
+
         // Lock button click event
         $('#lockBtn').click(function() {
             $.ajax({
-                url: 'http://raspberrypi16.local:8000/api/lock', //replace raspberrypi16.local with your raspberry pi hostname
+                url: '/api/lock',
                 type: 'POST',
                 success: function(response) {
                     console.log(response);  // Log success message
                 },
                 error: function(xhr, status, error) {
-                    console.error(error);  // Log error message
+                    alert(errorText(xhr, "Lock failed"));
                 }
             });
         });
@@ -304,28 +458,13 @@ themeToggleBtn.addEventListener('click', function() {
         // Unlock button click event
         $('#unlockBtn').click(function() {
             $.ajax({
-                url: 'http://raspberrypi16.local:8000/api/unlock', //replace raspberrypi16.local with your raspberry pi hostname
+                url: '/api/unlock',
                 type: 'POST',
                 success: function(response) {
                     console.log(response);  // Log success message
                 },
                 error: function(xhr, status, error) {
-                    console.error(error);  // Log error message
-                }
-            });
-        });
-
-
-
-        $('#trainBtn').click(function() {
-        $.ajax({
-                url: 'http://raspberrypi16.local:8000/train_model', //replace raspberrypi16.local with your raspberry pi hostname
-                type: 'POST',
-                success: function(response) {
-                    console.log(response);  // Log success message
-                },
-                error: function(xhr, status, error) {
-                    console.error(error);  // Log error message
+                    alert(errorText(xhr, "Unlock failed"));
                 }
             });
         });
