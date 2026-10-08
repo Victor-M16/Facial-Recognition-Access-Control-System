@@ -51,7 +51,7 @@ What isn't:
 ## Known limitations
 
 - **No liveness detection.** A photo or video of an enrolled person held up to the camera will probably unlock the door.
-- **Lookalikes.** Matching takes the closest enrolled face within a distance of 0.4 (`FRACS_MATCH_TOLERANCE`). Someone who isn't enrolled but looks enough like someone who is can still be let in as them. The limit was tuned on the four people in `dataset/` (see [Choosing the match limit](#choosing-the-match-limit)), which is a small sample from photos rather than the door camera; the more people you enroll, the likelier a close lookalike. Re-check it with your own enrolled faces.
+- **Lookalikes.** Matching takes the closest enrolled face within a distance of 0.4 (`FRACS_MATCH_TOLERANCE`). Someone who isn't enrolled but looks enough like someone who is can still be let in as them. The limit was tuned on four people's photos (see [Choosing the match limit](#choosing-the-match-limit)), which is a small sample from photos rather than the door camera; the more people you enroll, the likelier a close lookalike. Re-check it with your own enrolled faces.
 - **Single-frame decisions.** One frame is enough to unlock.
 - **Accuracy and speed haven't been measured** on the Pi or on live camera footage. Recognition runs on the Pi's CPU and pauses while training.
 - Signing out doesn't close live-update connections already open in other tabs (they stop at the next page load). Login lockouts reset when the server restarts.
@@ -73,11 +73,13 @@ python -m app.cli create-user <name>  # prompts for a password (8+ characters)
 python supercam.py                     # serves the portal on http://<pi>:8000
 ```
 
-To move the photos in `dataset/<PersonName>/` into the database and train on them in one step:
+To enroll a folder of existing photos in one step, arrange them as `<folder>/<PersonName>/*.jpg` and run:
 
 ```bash
-python -m app.cli import-dataset dataset --deny Pemphero --train
+python -m app.cli import-dataset <folder> [--deny NAME] --train
 ```
+
+Keep that folder outside this repository. Face photos are personal data, and `.gitignore` blocks `dataset/` and `*.pickle` so they aren't committed by accident.
 
 After that, people are managed from the portal: add a person, capture or upload a few photos, choose whether they're granted access, and press **Train**. Where you can, enroll with **Capture** from the door camera rather than uploads: matching works best when enrollment photos look like what the camera will see.
 
@@ -107,7 +109,7 @@ All settings are environment variables (see `app/config.py`):
 
 Each face becomes a list of 128 numbers, and the distance between two lists says how alike two faces are. A face counts as an enrolled person when it's within `FRACS_MATCH_TOLERANCE` of one of their photos. Too high a limit lets strangers in as someone who looks like them; too low turns enrolled people away.
 
-The default of 0.4 comes from the 94 usable photos of 4 people in `dataset/`:
+The default of 0.4 comes from 94 usable photos of 4 people, the project's original enrollment set (no longer published here, for privacy):
 
 | Limit | Strangers let in | Enrolled people accepted |
 |---|---|---|
@@ -122,7 +124,7 @@ To check the limit on your own enrolled faces:
 
 ```bash
 python -m app.cli evaluate-threshold                  # uses the database; add --limits 0.35 0.4 0.45 to choose values
-python -m app.cli evaluate-threshold --from-pickle encodings.pickle   # the legacy file
+python -m app.cli evaluate-threshold --from-pickle <file>.pickle      # a legacy encodings file from the old Flask app
 ```
 
 The server also logs how far each face at the door was from its closest enrolled photo (`Victor in view (closest enrolled face 0.312 away)`), which shows whether live frames sit comfortably inside the limit.

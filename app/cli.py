@@ -1,12 +1,12 @@
 """Command-line helpers.
 
-    python -m app.cli import-dataset dataset [--deny NAME ...] [--train]
+    python -m app.cli import-dataset FOLDER [--deny NAME ...] [--train]
     python -m app.cli train [--full]
     python -m app.cli create-user NAME        (prompts for a password)
     python -m app.cli set-password NAME       (also signs that user out everywhere)
     python -m app.cli delete-user NAME
     python -m app.cli list-users
-    python -m app.cli evaluate-threshold [--limits 0.4 0.45 ...] [--from-pickle encodings.pickle]
+    python -m app.cli evaluate-threshold [--limits 0.4 0.45 ...] [--from-pickle FILE]
 
 Pass --password-stdin to read the password from standard input instead of prompting.
 """
@@ -92,7 +92,7 @@ def main(argv=None):
     ev = sub.add_parser("evaluate-threshold", help="measure match limits on the enrolled faces")
     ev.add_argument("--limits", type=float, nargs="+", default=list(DEFAULT_LIMITS))
     ev.add_argument("--from-pickle", metavar="PATH",
-                    help="use a legacy encodings.pickle instead of the database")
+                    help="use a legacy encodings pickle from the old Flask app instead of the database")
     args = parser.parse_args(argv)
 
     settings = Settings()

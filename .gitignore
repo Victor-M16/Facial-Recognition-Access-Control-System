@@ -2,3 +2,6 @@ data/
 __pycache__/
 .pytest_cache/
 *.pyc
+# Face photos and encodings are personal data: keep them out of this public repo
+dataset/
+*.pickle
