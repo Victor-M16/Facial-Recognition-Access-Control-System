@@ -13,14 +13,14 @@ FRACS (Facial Recognition Access Control and Surveillance System) is a Raspberry
 - **CI:** `.github/workflows/tests.yml` runs `pytest` on every PR and push to `main`, with g++ and libssl-dev installed. When `CI` is set, `tests/conftest.py` turns any skipped test into a failure.
 - **Tests:** `pytest` (config in `pytest.ini`). Run one test with `pytest tests/test_api.py::test_people_crud`. The tests need no camera, ESP32 or dlib: `tests/conftest.py` replaces `vision.encode_faces` with a fake that turns image brightness into an identity, and passes a `FakeCamera` / `FakeLock` into `create_app(..., start_background=False)`. The `client` fixture is signed in; `anon` is not. `tests/test_firmware_auth.py` compiles `wifi_servo/fracs_auth.h` with g++ and OpenSSL (skipped if either is missing) and checks its signatures match `app/lock.py`.
 - **Portal accounts:** `python -m app.cli create-user NAME` (prompts; `--password-stdin` for scripts), `set-password`, `delete-user`, `list-users`. There is no sign-up page; the login page says so when no accounts exist.
-- **Check the match limit:** `python -m app.cli evaluate-threshold [--limits ...] [--from-pickle encodings.pickle]` (app/evaluate.py) reports, per limit, how many enrolled photos are accepted and how many would let a stranger in. Re-run it before changing `FRACS_MATCH_TOLERANCE`.
-- **Import the legacy `dataset/<Name>/*.jpg` folders:** `python -m app.cli import-dataset dataset [--deny NAME] [--train]`. Train from the command line with `python -m app.cli train [--full]`.
+- **Check the match limit:** `python -m app.cli evaluate-threshold [--limits ...] [--from-pickle FILE]` (app/evaluate.py) reports, per limit, how many enrolled photos are accepted and how many would let a stranger in. Re-run it before changing `FRACS_MATCH_TOLERANCE`.
+- **Import a folder of photos laid out as `<folder>/<Name>/*.jpg`:** `python -m app.cli import-dataset <folder> [--deny NAME] [--train]`. Train from the command line with `python -m app.cli train [--full]`.
 - **ESP32 firmware:** flash `wifi_servo/wifi_servo.ino` with the Arduino IDE. It needs the `ESPAsyncWebServer` and `ESP32Servo` libraries. Set `ssid`/`password`, `servoPin` and `LOCK_SECRET` before flashing. The full sketch isn't compiled by the tests, only `fracs_auth.h`.
 - There is no linter config and no frontend build step. The pages load their JS/CSS from CDNs; `templates/node_modules` is committed but mostly unused.
 
 ## Configuration
 
-Everything is set through `FRACS_*` environment variables, read in `app/config.py` (`Settings`). `FRACS_DATA_DIR` (default `./data`, gitignored) holds `fracs.db` and `faces/<person_id>/<uuid>.jpg`. If `FRACS_ESP32_URL` or `FRACS_ESP32_SECRET` is unset, lock commands are skipped with a warning. `encodings.pickle` at the repo root belongs to the old Flask app and nothing reads it now.
+Everything is set through `FRACS_*` environment variables, read in `app/config.py` (`Settings`). `FRACS_DATA_DIR` (default `./data`, gitignored) holds `fracs.db` and `faces/<person_id>/<uuid>.jpg`. If `FRACS_ESP32_URL` or `FRACS_ESP32_SECRET` is unset, lock commands are skipped with a warning. The original enrollment photos (`dataset/`) and `encodings.pickle` were removed from the repo for privacy, and `.gitignore` blocks them. Never commit face photos or encodings: the repo is public. Tests use synthetic images.
 
 ## Architecture (`app/`)
 
